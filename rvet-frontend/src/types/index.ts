@@ -66,4 +66,4 @@ export interface CatalogFilters {
 }
 
 // Expiry Status Types
-export type ExpiryStatus = 'none' | 'safe' | 'warning' | 'critical' | 'expired';
+export type ExpiryStatus = "none" | "safe" | "warning" | "critical" | "expired";

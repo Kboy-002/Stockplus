@@ -1,19 +1,19 @@
-import type { Product, Category, VendorStats, Vendor } from '../types';
+import type { Product, Category, VendorStats, Vendor } from "../types";
 
 // Mock Categories
 export const mockCategories: Category[] = [
-  { _id: '1', name: 'Snacks' },
-  { _id: '2', name: 'Drinks' },
-  { _id: '3', name: 'Meals' },
-  { _id: '4', name: 'Stationery' },
-  { _id: '5', name: 'Personal Care' },
+  { _id: "1", name: "Snacks" },
+  { _id: "2", name: "Drinks" },
+  { _id: "3", name: "Meals" },
+  { _id: "4", name: "Stationery" },
+  { _id: "5", name: "Personal Care" },
 ];
 
 // Mock Vendor
 export const mockVendor: Vendor = {
-  _id: 'v1',
-  name: 'John Doe',
-  email: 'john@vendor.com',
+  _id: "v1",
+  name: "John Doe",
+  email: "john@vendor.com",
   shop_name: "John's Corner Store",
 };
 
@@ -27,9 +27,9 @@ const daysFromNow = (days: number): string => {
 // Mock Products
 export const mockProducts: Product[] = [
   {
-    _id: 'p1',
+    _id: "p1",
     vendor_id: mockVendor,
-    name: 'Coca Cola 500ml',
+    name: "Coca Cola 500ml",
     category_id: mockCategories[1], // Drinks
     price: 200,
     quantity: 50,
@@ -37,9 +37,9 @@ export const mockProducts: Product[] = [
     createdAt: new Date().toISOString(),
   },
   {
-    _id: 'p2',
+    _id: "p2",
     vendor_id: mockVendor,
-    name: 'Indomie Noodles',
+    name: "Indomie Noodles",
     category_id: mockCategories[2], // Meals
     price: 150,
     quantity: 100,
@@ -47,9 +47,9 @@ export const mockProducts: Product[] = [
     createdAt: new Date().toISOString(),
   },
   {
-    _id: 'p3',
+    _id: "p3",
     vendor_id: mockVendor,
-    name: 'Gala Sausage Roll',
+    name: "Gala Sausage Roll",
     category_id: mockCategories[0], // Snacks
     price: 300,
     quantity: 25,
@@ -57,9 +57,9 @@ export const mockProducts: Product[] = [
     createdAt: new Date().toISOString(),
   },
   {
-    _id: 'p4',
+    _id: "p4",
     vendor_id: mockVendor,
-    name: 'Bic Pen (Blue)',
+    name: "Bic Pen (Blue)",
     category_id: mockCategories[3], // Stationery
     price: 100,
     quantity: 200,
@@ -67,9 +67,9 @@ export const mockProducts: Product[] = [
     createdAt: new Date().toISOString(),
   },
   {
-    _id: 'p5',
+    _id: "p5",
     vendor_id: mockVendor,
-    name: 'Close-Up Toothpaste',
+    name: "Close-Up Toothpaste",
     category_id: mockCategories[4], // Personal Care
     price: 500,
     quantity: 30,
@@ -77,9 +77,9 @@ export const mockProducts: Product[] = [
     createdAt: new Date().toISOString(),
   },
   {
-    _id: 'p6',
+    _id: "p6",
     vendor_id: mockVendor,
-    name: 'Pepsi 35cl',
+    name: "Pepsi 35cl",
     category_id: mockCategories[1], // Drinks
     price: 150,
     quantity: 8, // Low stock
@@ -87,9 +87,9 @@ export const mockProducts: Product[] = [
     createdAt: new Date().toISOString(),
   },
   {
-    _id: 'p7',
+    _id: "p7",
     vendor_id: mockVendor,
-    name: 'Digestive Biscuits',
+    name: "Digestive Biscuits",
     category_id: mockCategories[0], // Snacks
     price: 450,
     quantity: 0, // Out of stock
@@ -97,9 +97,9 @@ export const mockProducts: Product[] = [
     createdAt: new Date().toISOString(),
   },
   {
-    _id: 'p8',
+    _id: "p8",
     vendor_id: mockVendor,
-    name: 'Fanta Orange 50cl',
+    name: "Fanta Orange 50cl",
     category_id: mockCategories[1], // Drinks
     price: 200,
     quantity: 45,
@@ -107,9 +107,9 @@ export const mockProducts: Product[] = [
     createdAt: new Date().toISOString(),
   },
   {
-    _id: 'p9',
+    _id: "p9",
     vendor_id: mockVendor,
-    name: 'A4 Notebook (40 leaves)',
+    name: "A4 Notebook (40 leaves)",
     category_id: mockCategories[3], // Stationery
     price: 350,
     quantity: 75,
@@ -117,9 +117,9 @@ export const mockProducts: Product[] = [
     createdAt: new Date().toISOString(),
   },
   {
-    _id: 'p10',
+    _id: "p10",
     vendor_id: mockVendor,
-    name: 'Dettol Soap',
+    name: "Dettol Soap",
     category_id: mockCategories[4], // Personal Care
     price: 400,
     quantity: 20,
@@ -127,9 +127,9 @@ export const mockProducts: Product[] = [
     createdAt: new Date().toISOString(),
   },
   {
-    _id: 'p11',
+    _id: "p11",
     vendor_id: mockVendor,
-    name: 'Meatpie',
+    name: "Meatpie",
     category_id: mockCategories[2], // Meals
     price: 350,
     quantity: 12,
@@ -137,9 +137,9 @@ export const mockProducts: Product[] = [
     createdAt: new Date().toISOString(),
   },
   {
-    _id: 'p12',
+    _id: "p12",
     vendor_id: mockVendor,
-    name: 'Chin Chin (Small)',
+    name: "Chin Chin (Small)",
     category_id: mockCategories[0], // Snacks
     price: 200,
     quantity: 40,

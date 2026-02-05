@@ -1,5 +1,5 @@
-import axios from 'axios';
-import type { AxiosInstance } from 'axios';
+import axios from "axios";
+import type { AxiosInstance } from "axios";
 import type {
   AuthResponse,
   VendorLoginData,
@@ -9,25 +9,25 @@ import type {
   VendorStats,
   Category,
   CatalogFilters,
-} from '../types';
+} from "../types";
 import {
   mockCategories,
   mockProducts,
   mockVendor,
   getMockStats,
   getAvailableProducts,
-} from '../data/mockData';
+} from "../data/mockData";
 
 // Set to true to use mock data (no backend needed)
 const USE_MOCK_DATA = true;
 
 const API: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: "http://localhost:5000/api",
 });
 
 // Add token to requests
 API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -44,12 +44,17 @@ export const register = async (data: VendorRegisterData) => {
     await new Promise((resolve) => setTimeout(resolve, 500));
     return {
       data: {
-        token: 'mock-jwt-token-12345',
-        vendor: { ...mockVendor, name: data.name, email: data.email, shop_name: data.shop_name },
+        token: "mock-jwt-token-12345",
+        vendor: {
+          ...mockVendor,
+          name: data.name,
+          email: data.email,
+          shop_name: data.shop_name,
+        },
       } as AuthResponse,
     };
   }
-  return API.post<AuthResponse>('/auth/register', data);
+  return API.post<AuthResponse>("/auth/register", data);
 };
 
 export const login = async (data: VendorLoginData) => {
@@ -59,14 +64,14 @@ export const login = async (data: VendorLoginData) => {
     if (data.email && data.password.length >= 6) {
       return {
         data: {
-          token: 'mock-jwt-token-12345',
+          token: "mock-jwt-token-12345",
           vendor: mockVendor,
         } as AuthResponse,
       };
     }
-    throw { response: { data: { message: 'Invalid credentials' } } };
+    throw { response: { data: { message: "Invalid credentials" } } };
   }
-  return API.post<AuthResponse>('/auth/login', data);
+  return API.post<AuthResponse>("/auth/login", data);
 };
 
 // Vendor APIs
@@ -75,7 +80,7 @@ export const getVendorProducts = async () => {
     await new Promise((resolve) => setTimeout(resolve, 300));
     return { data: mockProductsDB };
   }
-  return API.get<Product[]>('/vendor/products');
+  return API.get<Product[]>("/vendor/products");
 };
 
 export const addProduct = async (data: ProductFormData) => {
@@ -95,7 +100,7 @@ export const addProduct = async (data: ProductFormData) => {
     mockProductsDB = [newProduct, ...mockProductsDB];
     return { data: newProduct };
   }
-  return API.post<Product>('/vendor/products', data);
+  return API.post<Product>("/vendor/products", data);
 };
 
 export const updateProduct = async (id: string, data: ProductFormData) => {
@@ -112,7 +117,7 @@ export const updateProduct = async (id: string, data: ProductFormData) => {
             quantity: Number(data.quantity),
             expiry_date: data.expiry_date || null,
           }
-        : p
+        : p,
     );
     const updated = mockProductsDB.find((p) => p._id === id);
     return { data: updated as Product };
@@ -124,7 +129,7 @@ export const deleteProduct = async (id: string) => {
   if (USE_MOCK_DATA) {
     await new Promise((resolve) => setTimeout(resolve, 300));
     mockProductsDB = mockProductsDB.filter((p) => p._id !== id);
-    return { data: { message: 'Product deleted' } };
+    return { data: { message: "Product deleted" } };
   }
   return API.delete(`/vendor/products/${id}`);
 };
@@ -132,7 +137,9 @@ export const deleteProduct = async (id: string) => {
 export const updateStock = async (id: string, quantity: number) => {
   if (USE_MOCK_DATA) {
     await new Promise((resolve) => setTimeout(resolve, 200));
-    mockProductsDB = mockProductsDB.map((p) => (p._id === id ? { ...p, quantity } : p));
+    mockProductsDB = mockProductsDB.map((p) =>
+      p._id === id ? { ...p, quantity } : p,
+    );
     const updated = mockProductsDB.find((p) => p._id === id);
     return { data: updated as Product };
   }
@@ -144,7 +151,7 @@ export const getVendorStats = async () => {
     await new Promise((resolve) => setTimeout(resolve, 200));
     return { data: getMockStats(mockProductsDB) };
   }
-  return API.get<VendorStats>('/vendor/stats');
+  return API.get<VendorStats>("/vendor/stats");
 };
 
 // Catalog APIs
@@ -170,7 +177,7 @@ export const getCatalogProducts = async (params?: CatalogFilters) => {
 
     return { data: products };
   }
-  return API.get<Product[]>('/catalog/products', { params });
+  return API.get<Product[]>("/catalog/products", { params });
 };
 
 export const getCategories = async () => {
@@ -178,7 +185,7 @@ export const getCategories = async () => {
     await new Promise((resolve) => setTimeout(resolve, 200));
     return { data: mockCategories };
   }
-  return API.get<Category[]>('/catalog/categories');
+  return API.get<Category[]>("/catalog/categories");
 };
 
 export default API;

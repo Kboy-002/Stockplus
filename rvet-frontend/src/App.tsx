@@ -1,12 +1,17 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Pages
-import Login from './pages/Login';
-import Register from './pages/Register';
-import VendorDashboard from './pages/VendorDashboard';
-import StudentCatalog from './pages/StudentCatalog';
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import VendorDashboard from "./pages/VendorDashboard";
+import StudentCatalog from "./pages/StudentCatalog";
 
 function App() {
   return (

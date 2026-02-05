@@ -1,18 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { ChangeEvent } from 'react';
-import { Link } from 'react-router-dom';
-import { getCatalogProducts, getCategories } from '../utils/api';
-import type { Product, Category, CatalogFilters } from '../types';
+import { useState, useEffect, useCallback } from "react";
+import type { ChangeEvent } from "react";
+import { Link } from "react-router-dom";
+import { getCatalogProducts, getCategories } from "../utils/api";
+import type { Product, Category, CatalogFilters } from "../types";
 
 const StudentCatalog = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<CatalogFilters>({
-    category: '',
-    search: '',
-    minPrice: '',
-    maxPrice: '',
+    category: "",
+    search: "",
+    minPrice: "",
+    maxPrice: "",
   });
 
   const fetchProducts = useCallback(async () => {
@@ -27,7 +27,7 @@ const StudentCatalog = () => {
       setProducts(response.data);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error("Error fetching products:", error);
       setLoading(false);
     }
   }, [filters]);
@@ -38,7 +38,7 @@ const StudentCatalog = () => {
         const response = await getCategories();
         setCategories(response.data);
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error("Error fetching categories:", error);
       }
     };
     fetchCategories();
@@ -55,7 +55,9 @@ const StudentCatalog = () => {
     return () => clearInterval(interval);
   }, [fetchProducts]);
 
-  const handleFilterChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleFilterChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     setFilters({
       ...filters,
       [e.target.name]: e.target.value,
@@ -64,10 +66,10 @@ const StudentCatalog = () => {
 
   const clearFilters = () => {
     setFilters({
-      category: '',
-      search: '',
-      minPrice: '',
-      maxPrice: '',
+      category: "",
+      search: "",
+      minPrice: "",
+      maxPrice: "",
     });
   };
 
@@ -108,8 +110,12 @@ const StudentCatalog = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Student Mall Catalog</h1>
-              <p className="text-sm text-gray-600 mt-1">Real-time product availability</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Student Mall Catalog
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                Real-time product availability
+              </p>
             </div>
             <Link
               to="/login"
@@ -128,7 +134,9 @@ const StudentCatalog = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Search
+              </label>
               <input
                 type="text"
                 name="search"
@@ -140,7 +148,9 @@ const StudentCatalog = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Category
+              </label>
               <select
                 name="category"
                 value={filters.category}
@@ -157,7 +167,9 @@ const StudentCatalog = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Min Price</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Min Price
+              </label>
               <input
                 type="number"
                 name="minPrice"
@@ -170,7 +182,9 @@ const StudentCatalog = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Max Price</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Max Price
+              </label>
               <input
                 type="number"
                 name="maxPrice"
@@ -194,10 +208,13 @@ const StudentCatalog = () => {
         {/* Products Grid */}
         <div className="mb-4">
           <p className="text-gray-600">
-            Showing {products.length} product{products.length !== 1 ? 's' : ''}
-            {filters.category || filters.search || filters.minPrice || filters.maxPrice
-              ? ' (filtered)'
-              : ''}
+            Showing {products.length} product{products.length !== 1 ? "s" : ""}
+            {filters.category ||
+            filters.search ||
+            filters.minPrice ||
+            filters.maxPrice
+              ? " (filtered)"
+              : ""}
           </p>
         </div>
 
@@ -220,7 +237,9 @@ const StudentCatalog = () => {
                 d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
               />
             </svg>
-            <h3 className="mt-2 text-lg font-medium text-gray-900">No products found</h3>
+            <h3 className="mt-2 text-lg font-medium text-gray-900">
+              No products found
+            </h3>
             <p className="mt-1 text-sm text-gray-500">
               Try adjusting your filters or check back later.
             </p>
@@ -234,7 +253,9 @@ const StudentCatalog = () => {
               >
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {product.name}
+                    </h3>
                     {product.quantity < 10 && (
                       <span className="px-2 py-1 text-xs rounded bg-red-100 text-red-700">
                         Low Stock
@@ -243,13 +264,15 @@ const StudentCatalog = () => {
                   </div>
 
                   <p className="text-sm text-gray-600 mb-4">
-                    {product.category_id?.name || 'Uncategorized'}
+                    {product.category_id?.name || "Uncategorized"}
                   </p>
 
                   <div className="space-y-2 mb-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Price:</span>
-                      <span className="text-lg font-bold text-gray-900">₦{product.price}</span>
+                      <span className="text-lg font-bold text-gray-900">
+                        ₦{product.price}
+                      </span>
                     </div>
 
                     <div className="flex justify-between items-center">
@@ -262,9 +285,9 @@ const StudentCatalog = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Vendor:</span>
                       <span className="text-sm font-medium text-gray-900">
-                        {typeof product.vendor_id === 'object'
+                        {typeof product.vendor_id === "object"
                           ? product.vendor_id.shop_name
-                          : 'Unknown'}
+                          : "Unknown"}
                       </span>
                     </div>
 
@@ -279,7 +302,9 @@ const StudentCatalog = () => {
                   </div>
 
                   {getExpiryBadge(product.expiry_date) && (
-                    <div className="mt-3">{getExpiryBadge(product.expiry_date)}</div>
+                    <div className="mt-3">
+                      {getExpiryBadge(product.expiry_date)}
+                    </div>
                   )}
                 </div>
 
