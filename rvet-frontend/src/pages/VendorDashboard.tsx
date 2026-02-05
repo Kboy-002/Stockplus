@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { FormEvent, ChangeEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
   getVendorProducts,
@@ -18,6 +18,127 @@ import type {
   ProductFormData,
   ExpiryStatus,
 } from "../types";
+
+// Icon Components
+const LeafIcon = () => (
+  <svg
+    className="w-6 h-6"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+    <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+  </svg>
+);
+
+const PackageIcon = () => (
+  <svg
+    className="w-6 h-6"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="m7.5 4.27 9 5.15" />
+    <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+    <path d="m3.3 7 8.7 5 8.7-5" />
+    <path d="M12 22V12" />
+  </svg>
+);
+
+const ClockIcon = () => (
+  <svg
+    className="w-6 h-6"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </svg>
+);
+
+const AlertIcon = () => (
+  <svg
+    className="w-6 h-6"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+    <path d="M12 9v4" />
+    <path d="M12 17h.01" />
+  </svg>
+);
+
+const PlusIcon = () => (
+  <svg
+    className="w-5 h-5"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+
+const EditIcon = () => (
+  <svg
+    className="w-4 h-4"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+  </svg>
+);
+
+const TrashIcon = () => (
+  <svg
+    className="w-4 h-4"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M3 6h18" />
+    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+  </svg>
+);
+
+const LogoutIcon = () => (
+  <svg
+    className="w-5 h-5"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <polyline points="16 17 21 12 16 7" />
+    <line x1="21" y1="12" x2="9" y2="12" />
+  </svg>
+);
+
+const XIcon = () => (
+  <svg
+    className="w-5 h-5"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M18 6 6 18" />
+    <path d="m6 6 12 12" />
+  </svg>
+);
 
 const VendorDashboard = () => {
   const { vendor, logout } = useAuth();
@@ -68,12 +189,10 @@ const VendorDashboard = () => {
 
   const getExpiryStatus = (expiryDate: string | null): ExpiryStatus => {
     if (!expiryDate) return "none";
-
     const today = new Date();
     const expiry = new Date(expiryDate);
     const diffTime = expiry.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
     if (diffDays < 0) return "expired";
     if (diffDays <= 3) return "critical";
     if (diffDays <= 7) return "warning";
@@ -82,32 +201,12 @@ const VendorDashboard = () => {
 
   const getExpiryBadge = (expiryDate: string | null) => {
     const status = getExpiryStatus(expiryDate);
-    const badges: Record<ExpiryStatus, JSX.Element> = {
-      none: (
-        <span className="px-2 py-1 text-xs rounded bg-gray-200 text-gray-700">
-          No Expiry
-        </span>
-      ),
-      safe: (
-        <span className="px-2 py-1 text-xs rounded bg-green-100 text-green-700">
-          Safe
-        </span>
-      ),
-      warning: (
-        <span className="px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-700">
-          Warning
-        </span>
-      ),
-      critical: (
-        <span className="px-2 py-1 text-xs rounded bg-orange-100 text-orange-700">
-          Critical
-        </span>
-      ),
-      expired: (
-        <span className="px-2 py-1 text-xs rounded bg-red-100 text-red-700">
-          Expired
-        </span>
-      ),
+    const badges: Record<ExpiryStatus, React.ReactNode> = {
+      none: <span className="badge-neutral">No Expiry</span>,
+      safe: <span className="badge-success">Fresh</span>,
+      warning: <span className="badge-warning">Expiring</span>,
+      critical: <span className="badge-danger">Critical</span>,
+      expired: <span className="badge-danger">Expired</span>,
     };
     return badges[status];
   };
@@ -187,184 +286,237 @@ const VendorDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+      <div className="min-h-screen mesh-bg flex items-center justify-center">
+        <div className="card p-8 flex items-center gap-4">
+          <svg
+            className="animate-spin w-8 h-8 text-brand-500"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="none"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+            />
+          </svg>
+          <span className="text-lg font-medium text-surface-700">
+            Loading dashboard...
+          </span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen mesh-bg">
       {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Vendor Dashboard
-              </h1>
-              <p className="text-sm text-gray-600">{vendor?.shop_name}</p>
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-surface-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 lg:h-20">
+            {/* Logo */}
+            <Link to="/catalog" className="flex items-center gap-2">
+              <div className="p-2 bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl text-white">
+                <LeafIcon />
+              </div>
+              <span className="text-xl font-display font-bold text-surface-800">
+                Fresh<span className="text-gradient">Track</span>
+              </span>
+            </Link>
+
+            {/* User Info & Actions */}
+            <div className="flex items-center gap-4">
+              <div className="hidden sm:block text-right">
+                <p className="text-sm font-semibold text-surface-900">
+                  {vendor?.name}
+                </p>
+                <p className="text-xs text-surface-500">{vendor?.shop_name}</p>
+              </div>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-400 to-accent-500 flex items-center justify-center text-white font-bold">
+                {vendor?.name?.charAt(0) || "V"}
+              </div>
+              <button
+                onClick={handleLogout}
+                className="p-2.5 rounded-xl bg-surface-100 text-surface-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+                title="Logout"
+              >
+                <LogoutIcon />
+              </button>
             </div>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-            >
-              Logout
-            </button>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Products</p>
-                <p className="text-3xl font-bold text-gray-900">
-                  {stats.totalProducts}
-                </p>
+        {/* Welcome Banner */}
+        <div className="card p-6 lg:p-8 mb-8 bg-gradient-to-r from-brand-500 to-brand-600 text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-white/5 rounded-full translate-y-1/2" />
+          <div className="relative z-10">
+            <h1 className="text-2xl lg:text-3xl font-display font-bold mb-2">
+              Welcome back, {vendor?.name?.split(" ")[0]}! 👋
+            </h1>
+            <p className="text-brand-100 text-lg">
+              Here's what's happening with your inventory today.
+            </p>
+          </div>
+        </div>
+
+        {/* Stats Grid - Bento Style */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 mb-8">
+          {/* Total Products */}
+          <div className="card p-6 group hover:border-brand-300 transition-colors">
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 rounded-2xl bg-blue-100 text-blue-600 group-hover:scale-110 transition-transform">
+                <PackageIcon />
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                  />
-                </svg>
-              </div>
+              <span className="text-xs font-semibold text-surface-400 uppercase tracking-wider">
+                Total
+              </span>
             </div>
+            <p className="text-4xl font-display font-bold text-surface-900 mb-1">
+              {stats.totalProducts}
+            </p>
+            <p className="text-sm text-surface-500">Products in inventory</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Expiring Soon</p>
-                <p className="text-3xl font-bold text-orange-600">
-                  {stats.expiringItems}
-                </p>
+          {/* Expiring Soon */}
+          <div className="card p-6 group hover:border-amber-300 transition-colors">
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 rounded-2xl bg-amber-100 text-amber-600 group-hover:scale-110 transition-transform">
+                <ClockIcon />
               </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-orange-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
+              <span className="text-xs font-semibold text-surface-400 uppercase tracking-wider">
+                Attention
+              </span>
             </div>
+            <p
+              className={`text-4xl font-display font-bold mb-1 ${stats.expiringItems > 0 ? "text-amber-600" : "text-surface-900"}`}
+            >
+              {stats.expiringItems}
+            </p>
+            <p className="text-sm text-surface-500">Expiring within 7 days</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Out of Stock</p>
-                <p className="text-3xl font-bold text-red-600">
-                  {stats.outOfStockItems}
-                </p>
+          {/* Out of Stock */}
+          <div className="card p-6 group hover:border-red-300 transition-colors">
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 rounded-2xl bg-red-100 text-red-600 group-hover:scale-110 transition-transform">
+                <AlertIcon />
               </div>
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </div>
+              <span className="text-xs font-semibold text-surface-400 uppercase tracking-wider">
+                Critical
+              </span>
             </div>
+            <p
+              className={`text-4xl font-display font-bold mb-1 ${stats.outOfStockItems > 0 ? "text-red-600" : "text-surface-900"}`}
+            >
+              {stats.outOfStockItems}
+            </p>
+            <p className="text-sm text-surface-500">Out of stock items</p>
           </div>
         </div>
 
         {/* Products Section */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-900">My Products</h2>
+        <div className="card overflow-hidden">
+          <div className="px-6 py-5 border-b border-surface-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-display font-bold text-surface-900">
+                Your Products
+              </h2>
+              <p className="text-sm text-surface-500">
+                {products.length} items in your inventory
+              </p>
+            </div>
             <button
               onClick={() => handleOpenModal()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              className="btn-primary flex items-center gap-2"
             >
-              + Add Product
+              <PlusIcon />
+              <span>Add Product</span>
             </button>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Product
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Stock
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Expiry Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {products.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="px-6 py-4 text-center text-gray-500"
-                    >
-                      No products yet. Click "Add Product" to get started.
-                    </td>
+          {products.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="w-20 h-20 mx-auto mb-6 bg-surface-100 rounded-3xl flex items-center justify-center">
+                <PackageIcon />
+              </div>
+              <h3 className="text-xl font-display font-bold text-surface-900 mb-2">
+                No products yet
+              </h3>
+              <p className="text-surface-500 mb-6">
+                Start building your inventory by adding your first product.
+              </p>
+              <button onClick={() => handleOpenModal()} className="btn-primary">
+                Add your first product
+              </button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-surface-50">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                      Product
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                      Category
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                      Price
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                      Stock
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
-                ) : (
-                  products.map((product) => (
-                    <tr key={product._id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {product.name}
+                </thead>
+                <tbody className="divide-y divide-surface-100">
+                  {products.map((product) => (
+                    <tr
+                      key={product._id}
+                      className="hover:bg-surface-50 transition-colors"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-surface-100 to-surface-200 flex items-center justify-center text-xl">
+                            {product.category_id?.name === "Snacks" && "🍿"}
+                            {product.category_id?.name === "Drinks" && "🥤"}
+                            {product.category_id?.name === "Meals" && "🍱"}
+                            {product.category_id?.name === "Stationery" && "📚"}
+                            {product.category_id?.name === "Personal Care" &&
+                              "🧴"}
+                            {!product.category_id?.name && "📦"}
+                          </div>
+                          <span className="font-semibold text-surface-900">
+                            {product.name}
+                          </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-surface-600">
                           {product.category_id?.name || "N/A"}
-                        </div>
+                        </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          ₦{product.price}
-                        </div>
+                      <td className="px-6 py-4">
+                        <span className="font-semibold text-surface-900">
+                          ₦{product.price.toLocaleString()}
+                        </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         <input
                           type="number"
                           defaultValue={product.quantity}
@@ -378,53 +530,62 @@ const VendorDashboard = () => {
                               );
                             }
                           }}
-                          className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
+                          className="w-20 px-3 py-1.5 bg-surface-100 border-0 rounded-lg text-sm font-medium text-center focus:bg-white focus:ring-2 focus:ring-brand-400 transition-all"
                         />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {product.expiry_date
-                            ? new Date(product.expiry_date).toLocaleDateString()
-                            : "N/A"}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         {getExpiryBadge(product.expiry_date)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => handleOpenModal(product)}
-                          className="text-blue-600 hover:text-blue-900 mr-3"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product._id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Delete
-                        </button>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleOpenModal(product)}
+                            className="p-2 rounded-lg text-surface-500 hover:bg-surface-100 hover:text-brand-600 transition-colors"
+                            title="Edit"
+                          >
+                            <EditIcon />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(product._id)}
+                            className="p-2 rounded-lg text-surface-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                            title="Delete"
+                          >
+                            <TrashIcon />
+                          </button>
+                        </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </main>
 
       {/* Add/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-xl font-semibold mb-4">
-              {editingProduct ? "Edit Product" : "Add New Product"}
-            </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={handleCloseModal}
+          />
+          <div className="relative card w-full max-w-md p-6 lg:p-8 animate-slide-up">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-display font-bold text-surface-900">
+                {editingProduct ? "Edit Product" : "Add New Product"}
+              </h3>
+              <button
+                onClick={handleCloseModal}
+                className="p-2 rounded-lg hover:bg-surface-100 text-surface-500 transition-colors"
+              >
+                <XIcon />
+              </button>
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-surface-700 mb-2">
                   Product Name
                 </label>
                 <input
@@ -434,12 +595,13 @@ const VendorDashboard = () => {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="input-modern"
+                  placeholder="e.g., Chocolate Bar"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-surface-700 mb-2">
                   Category
                 </label>
                 <select
@@ -448,9 +610,9 @@ const VendorDashboard = () => {
                     setFormData({ ...formData, category_id: e.target.value })
                   }
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="input-modern"
                 >
-                  <option value="">Select Category</option>
+                  <option value="">Select a category</option>
                   {categories.map((cat) => (
                     <option key={cat._id} value={cat._id}>
                       {cat.name}
@@ -459,41 +621,44 @@ const VendorDashboard = () => {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Price (₦)
-                </label>
-                <input
-                  type="number"
-                  value={formData.price}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setFormData({ ...formData, price: e.target.value })
-                  }
-                  required
-                  min="0"
-                  step="0.01"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-surface-700 mb-2">
+                    Price (₦)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.price}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setFormData({ ...formData, price: e.target.value })
+                    }
+                    required
+                    min="0"
+                    step="0.01"
+                    className="input-modern"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-surface-700 mb-2">
+                    Quantity
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.quantity}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setFormData({ ...formData, quantity: e.target.value })
+                    }
+                    required
+                    min="0"
+                    className="input-modern"
+                    placeholder="0"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Quantity
-                </label>
-                <input
-                  type="number"
-                  value={formData.quantity}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setFormData({ ...formData, quantity: e.target.value })
-                  }
-                  required
-                  min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-surface-700 mb-2">
                   Expiry Date (Optional)
                 </label>
                 <input
@@ -502,21 +667,18 @@ const VendorDashboard = () => {
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, expiry_date: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="input-modern"
                 />
               </div>
 
-              <div className="flex gap-3 mt-6">
-                <button
-                  type="submit"
-                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-                >
+              <div className="flex gap-3 pt-4">
+                <button type="submit" className="flex-1 btn-primary">
                   {editingProduct ? "Update" : "Add"} Product
                 </button>
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition"
+                  className="flex-1 btn-secondary"
                 >
                   Cancel
                 </button>
