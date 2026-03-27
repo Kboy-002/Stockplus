@@ -91,6 +91,7 @@ const StudentCatalog = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<CatalogFilters>({
     category: "",
@@ -133,6 +134,14 @@ const StudentCatalog = () => {
     const interval = setInterval(() => fetchProducts(), 60000);
     return () => clearInterval(interval);
   }, [fetchProducts]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDetailProduct(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const handleFilterChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -177,6 +186,14 @@ const StudentCatalog = () => {
 
   const hasActiveFilters =
     filters.category || filters.search || filters.minPrice || filters.maxPrice;
+
+  const formatExpiryDetail = (expiryDate: string | null): string => {
+    if (!expiryDate) return "No expiry date";
+    const days = getExpiryDays(expiryDate);
+    if (days === null) return "No expiry date";
+    const d = new Date(expiryDate);
+    return `${d.toLocaleDateString()} (${days} day${days === 1 ? "" : "s"} left)`;
+  };
 
   return (
     <div className="min-h-screen mesh-bg">
@@ -449,7 +466,11 @@ const StudentCatalog = () => {
                   </div>
 
                   {/* Action Button */}
-                  <button className="w-full btn-secondary text-sm py-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setDetailProduct(product)}
+                    className="w-full btn-secondary text-sm py-2.5"
+                  >
                     View Details
                   </button>
                 </div>
@@ -458,6 +479,103 @@ const StudentCatalog = () => {
           </div>
         )}
       </main>
+
+      {/* Product detail modal */}
+      {detailProduct && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-surface-900/60 backdrop-blur-sm animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="product-detail-title"
+          onClick={() => setDetailProduct(null)}
+        >
+          <div
+            className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-surface-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 border-b border-surface-100 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold text-brand-600 uppercase tracking-wide">
+                  {detailProduct.category_id?.name || "Uncategorized"}
+                </p>
+                <h2
+                  id="product-detail-title"
+                  className="text-xl font-display font-bold text-surface-900 mt-1"
+                >
+                  {detailProduct.name}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDetailProduct(null)}
+                className="shrink-0 p-2 rounded-xl text-surface-500 hover:bg-surface-100 hover:text-surface-800 transition-colors"
+                aria-label="Close"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 space-y-4 text-left">
+              <div className="flex justify-between items-baseline gap-4">
+                <span className="text-surface-500 text-sm">Price</span>
+                <span className="text-2xl font-bold text-gradient">
+                  ₦{detailProduct.price.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between items-center gap-4">
+                <span className="text-surface-500 text-sm">In stock</span>
+                <span
+                  className={`font-semibold ${detailProduct.quantity < 10 ? "text-red-600" : "text-surface-900"}`}
+                >
+                  {detailProduct.quantity} units
+                </span>
+              </div>
+              <div className="flex justify-between items-start gap-4">
+                <span className="text-surface-500 text-sm shrink-0">Expiry</span>
+                <span className="text-surface-800 text-sm text-right">
+                  {formatExpiryDetail(detailProduct.expiry_date)}
+                </span>
+              </div>
+              <div className="pt-4 border-t border-surface-100">
+                <p className="text-xs font-semibold text-surface-500 uppercase tracking-wide mb-2">
+                  Store
+                </p>
+                <div className="flex items-start gap-2 text-surface-800">
+                  <StoreIcon />
+                  <div>
+                    <p className="font-semibold">
+                      {typeof detailProduct.vendor_id === "object"
+                        ? detailProduct.vendor_id.shop_name
+                        : "Unknown"}
+                    </p>
+                    {typeof detailProduct.vendor_id === "object" && (
+                      <p className="text-sm text-surface-500 mt-0.5">
+                        {detailProduct.vendor_id.email}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 pt-0">
+              <button
+                type="button"
+                onClick={() => setDetailProduct(null)}
+                className="w-full btn-primary py-3"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Live Indicator */}
       <div className="fixed bottom-6 right-6 glass-card px-4 py-3 rounded-2xl flex items-center gap-3 animate-fade-in">

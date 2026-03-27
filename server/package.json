@@ -7,7 +7,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "db:init": "tsx src/scripts/initDb.ts"
+    "db:init": "tsx src/scripts/initDb.ts",
+    "db:seed": "tsx src/scripts/seedDemo.ts"
   },
   "engines": {
     "node": ">=20"
