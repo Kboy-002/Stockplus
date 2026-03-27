@@ -57,12 +57,24 @@ export interface VendorStats {
   outOfStockItems: number;
 }
 
+/** Vendors that currently list catalog-visible products (for filters) */
+export interface CatalogVendor {
+  _id: string;
+  shop_name: string;
+}
+
 // Catalog Filter Types
 export interface CatalogFilters {
   category?: string;
   search?: string;
   minPrice?: string;
   maxPrice?: string;
+  /** Vendor (store) id */
+  vendor?: string;
+  /**
+   * `newest` | `store` | `price_asc` | `price_desc` | `name`
+   */
+  sort?: string;
 }
 
 // Expiry Status Types

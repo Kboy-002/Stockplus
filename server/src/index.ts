@@ -403,9 +403,28 @@ app.get("/api/catalog/categories", async (_req, res) => {
   }
 });
 
+app.get("/api/catalog/vendors", async (_req, res) => {
+  try {
+    const result = await pool.query<{ id: string; shop_name: string }>(
+      `SELECT DISTINCT v.id, v.shop_name
+       FROM vendors v
+       INNER JOIN products p ON p.vendor_id = v.id
+       WHERE p.quantity > 0
+         AND (p.expiry_date IS NULL OR p.expiry_date >= NOW())
+       ORDER BY v.shop_name ASC`,
+    );
+    res.json(
+      result.rows.map((r) => ({ _id: r.id, shop_name: r.shop_name })),
+    );
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Failed to load vendors" });
+  }
+});
+
 app.get("/api/catalog/products", async (req, res) => {
   try {
-    const { category, search, minPrice, maxPrice } = req.query;
+    const { category, search, minPrice, maxPrice, vendor, sort } = req.query;
     const conditions: string[] = [
       "p.quantity > 0",
       "(p.expiry_date IS NULL OR p.expiry_date >= NOW())",
@@ -416,6 +435,10 @@ app.get("/api/catalog/products", async (req, res) => {
     if (typeof category === "string" && category !== "") {
       conditions.push(`c.id::text = $${n++}`);
       params.push(category);
+    }
+    if (typeof vendor === "string" && vendor !== "") {
+      conditions.push(`v.id = $${n++}::uuid`);
+      params.push(vendor);
     }
     if (typeof search === "string" && search.trim() !== "") {
       conditions.push(`p.name ILIKE $${n++}`);
@@ -431,8 +454,21 @@ app.get("/api/catalog/products", async (req, res) => {
     }
 
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    const sortKey = typeof sort === "string" ? sort : "";
+    let orderSql = "ORDER BY p.created_at DESC";
+    if (sortKey === "store") {
+      orderSql = "ORDER BY v.shop_name ASC NULLS LAST, p.name ASC";
+    } else if (sortKey === "price_asc") {
+      orderSql = "ORDER BY p.price ASC NULLS LAST";
+    } else if (sortKey === "price_desc") {
+      orderSql = "ORDER BY p.price DESC NULLS LAST";
+    } else if (sortKey === "name") {
+      orderSql = "ORDER BY p.name ASC";
+    }
+
     const result = await pool.query<ProductJoinRow>(
-      `${productSelect} ${where} ORDER BY p.created_at DESC`,
+      `${productSelect} ${where} ${orderSql}`,
       params,
     );
     res.json(result.rows.map(mapProduct));

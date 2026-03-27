@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import type { ChangeEvent } from "react";
 import { Link } from "react-router-dom";
-import { getCatalogProducts, getCategories } from "../utils/api";
-import type { Product, Category, CatalogFilters } from "../types";
+import { getCatalogProducts, getCategories, getCatalogVendors } from "../utils/api";
+import type { Product, Category, CatalogFilters, CatalogVendor } from "../types";
 
 // Icon Components
 const LeafIcon = () => (
@@ -90,6 +90,7 @@ const StoreIcon = () => (
 const StudentCatalog = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [vendors, setVendors] = useState<CatalogVendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [detailProduct, setDetailProduct] = useState<Product | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -98,15 +99,19 @@ const StudentCatalog = () => {
     search: "",
     minPrice: "",
     maxPrice: "",
+    vendor: "",
+    sort: "newest",
   });
 
   const fetchProducts = useCallback(async () => {
     try {
       const params: CatalogFilters = {};
       if (filters.category) params.category = filters.category;
+      if (filters.vendor) params.vendor = filters.vendor;
       if (filters.search) params.search = filters.search;
       if (filters.minPrice) params.minPrice = filters.minPrice;
       if (filters.maxPrice) params.maxPrice = filters.maxPrice;
+      if (filters.sort && filters.sort !== "newest") params.sort = filters.sort;
 
       const response = await getCatalogProducts(params);
       setProducts(response.data);
@@ -130,8 +135,25 @@ const StudentCatalog = () => {
   }, []);
 
   useEffect(() => {
+    const fetchVendors = async () => {
+      try {
+        const response = await getCatalogVendors();
+        setVendors(response.data);
+      } catch (error) {
+        console.error("Error fetching vendors:", error);
+      }
+    };
+    fetchVendors();
+  }, []);
+
+  useEffect(() => {
     fetchProducts();
-    const interval = setInterval(() => fetchProducts(), 60000);
+    const interval = setInterval(() => {
+      fetchProducts();
+      getCatalogVendors()
+        .then((r) => setVendors(r.data))
+        .catch(() => {});
+    }, 60000);
     return () => clearInterval(interval);
   }, [fetchProducts]);
 
@@ -150,7 +172,14 @@ const StudentCatalog = () => {
   };
 
   const clearFilters = () => {
-    setFilters({ category: "", search: "", minPrice: "", maxPrice: "" });
+    setFilters({
+      category: "",
+      search: "",
+      minPrice: "",
+      maxPrice: "",
+      vendor: "",
+      sort: "newest",
+    });
   };
 
   const getExpiryDays = (expiryDate: string | null): number | null => {
@@ -185,7 +214,12 @@ const StudentCatalog = () => {
   };
 
   const hasActiveFilters =
-    filters.category || filters.search || filters.minPrice || filters.maxPrice;
+    filters.category ||
+    filters.vendor ||
+    filters.search ||
+    filters.minPrice ||
+    filters.maxPrice ||
+    (filters.sort && filters.sort !== "newest");
 
   const formatExpiryDetail = (expiryDate: string | null): string => {
     if (!expiryDate) return "No expiry date";
@@ -276,6 +310,41 @@ const StudentCatalog = () => {
             <div className="flex flex-wrap items-end gap-4">
               <div className="flex-1 min-w-[200px]">
                 <label className="block text-sm font-semibold text-surface-700 mb-2">
+                  Store
+                </label>
+                <select
+                  name="vendor"
+                  value={filters.vendor ?? ""}
+                  onChange={handleFilterChange}
+                  className="input-modern"
+                >
+                  <option value="">All stores</option>
+                  {vendors.map((v) => (
+                    <option key={v._id} value={v._id}>
+                      {v.shop_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-sm font-semibold text-surface-700 mb-2">
+                  Sort by
+                </label>
+                <select
+                  name="sort"
+                  value={filters.sort ?? "newest"}
+                  onChange={handleFilterChange}
+                  className="input-modern"
+                >
+                  <option value="newest">Newest first</option>
+                  <option value="store">Store name (A–Z)</option>
+                  <option value="price_asc">Price: low to high</option>
+                  <option value="price_desc">Price: high to low</option>
+                  <option value="name">Product name (A–Z)</option>
+                </select>
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-sm font-semibold text-surface-700 mb-2">
                   Category
                 </label>
                 <select
@@ -360,6 +429,45 @@ const StudentCatalog = () => {
               {cat.name}
             </button>
           ))}
+        </div>
+
+        {/* Store filter + sort (always visible) */}
+        <div className="flex flex-col sm:flex-row flex-wrap gap-4 mb-6">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-semibold text-surface-700 mb-2">
+              Store
+            </label>
+            <select
+              name="vendor"
+              value={filters.vendor ?? ""}
+              onChange={handleFilterChange}
+              className="input-modern w-full"
+            >
+              <option value="">All stores</option>
+              {vendors.map((v) => (
+                <option key={v._id} value={v._id}>
+                  {v.shop_name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-semibold text-surface-700 mb-2">
+              Sort by
+            </label>
+            <select
+              name="sort"
+              value={filters.sort ?? "newest"}
+              onChange={handleFilterChange}
+              className="input-modern w-full"
+            >
+              <option value="newest">Newest first</option>
+              <option value="store">Store name (A–Z)</option>
+              <option value="price_asc">Price: low to high</option>
+              <option value="price_desc">Price: high to low</option>
+              <option value="name">Product name (A–Z)</option>
+            </select>
+          </div>
         </div>
 
         {/* Results Count */}

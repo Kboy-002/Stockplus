@@ -9,6 +9,7 @@ import type {
   VendorStats,
   Category,
   CatalogFilters,
+  CatalogVendor,
 } from "../types";
 import {
   mockCategories,
@@ -167,15 +168,49 @@ export const getVendorStats = async () => {
   return API.get<VendorStats>("/vendor/stats");
 };
 
+function mockShopName(p: Product): string {
+  return typeof p.vendor_id === "object" ? p.vendor_id.shop_name : "";
+}
+
+function mockVendorId(p: Product): string {
+  return typeof p.vendor_id === "object" ? p.vendor_id._id : "";
+}
+
+function applyCatalogSort(products: Product[], sort?: string): Product[] {
+  const list = [...products];
+  switch (sort) {
+    case "store":
+      return list.sort(
+        (a, b) =>
+          mockShopName(a).localeCompare(mockShopName(b)) ||
+          a.name.localeCompare(b.name),
+      );
+    case "price_asc":
+      return list.sort((a, b) => a.price - b.price);
+    case "price_desc":
+      return list.sort((a, b) => b.price - a.price);
+    case "name":
+      return list.sort((a, b) => a.name.localeCompare(b.name));
+    default:
+      return list.sort(
+        (a, b) =>
+          new Date(b.createdAt ?? 0).getTime() -
+          new Date(a.createdAt ?? 0).getTime(),
+      );
+  }
+}
+
 // Catalog APIs
 export const getCatalogProducts = async (params?: CatalogFilters) => {
   if (USE_MOCK_DATA) {
     await new Promise((resolve) => setTimeout(resolve, 300));
     let products = getAvailableProducts(mockProductsDB);
 
-    // Apply filters
     if (params?.category) {
       products = products.filter((p) => p.category_id._id === params.category);
+    }
+    if (params?.vendor) {
+      products = products.filter((p) => mockVendorId(p) === params.vendor);
     }
     if (params?.search) {
       const search = params.search.toLowerCase();
@@ -188,9 +223,27 @@ export const getCatalogProducts = async (params?: CatalogFilters) => {
       products = products.filter((p) => p.price <= Number(params.maxPrice));
     }
 
+    products = applyCatalogSort(products, params?.sort);
     return { data: products };
   }
   return API.get<Product[]>("/catalog/products", { params });
+};
+
+export const getCatalogVendors = async () => {
+  if (USE_MOCK_DATA) {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    const map = new Map<string, string>();
+    for (const p of getAvailableProducts(mockProductsDB)) {
+      if (typeof p.vendor_id === "object") {
+        map.set(p.vendor_id._id, p.vendor_id.shop_name);
+      }
+    }
+    const data: CatalogVendor[] = [...map.entries()]
+      .map(([_id, shop_name]) => ({ _id, shop_name }))
+      .sort((a, b) => a.shop_name.localeCompare(b.shop_name));
+    return { data };
+  }
+  return API.get<CatalogVendor[]>("/catalog/vendors");
 };
 
 export const getCategories = async () => {
