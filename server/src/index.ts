@@ -17,9 +17,12 @@ function readJwtSecret(): string {
 const JWT_SECRET = readJwtSecret();
 
 const app = express();
-const corsOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim())
-  : ["http://localhost:5173", "http://127.0.0.1:5173"];
+
+const defaultCorsOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
+const extraCorsOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim().replace(/\/$/, ""))
+  : [];
+const corsOrigins = [...new Set([...defaultCorsOrigins, ...extraCorsOrigins])];
 
 app.use(
   cors({

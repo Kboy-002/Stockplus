@@ -21,8 +21,21 @@ import {
 /** Use mock data only when explicitly enabled (offline UI dev). */
 const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === "true";
 
+/** In production, VITE_API_URL must be set at build time (Vercel env). Otherwise requests wrongly use localhost. */
+function resolveApiBase(): string {
+  const fromEnv = import.meta.env.VITE_API_URL?.trim().replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+  if (import.meta.env.DEV) return "http://localhost:5000/api";
+  if (import.meta.env.PROD) {
+    console.error(
+      "[StockPulse] Missing VITE_API_URL. In Vercel → Settings → Environment Variables, set VITE_API_URL=https://YOUR-API.onrender.com/api and redeploy.",
+    );
+  }
+  return "";
+}
+
 const API: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:5000/api",
+  baseURL: resolveApiBase(),
 });
 
 // Add token to requests
