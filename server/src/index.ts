@@ -29,6 +29,11 @@ app.use(
 );
 app.use(express.json());
 
+// Root URL has no UI — API lives under /api (browsers hitting the host alone see this JSON)
+app.get("/", (_req, res) => {
+  res.json({ ok: true, service: "rvet-api", apiBase: "/api" });
+});
+
 interface VendorRow {
   id: string;
   name: string;
