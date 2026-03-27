@@ -1,0 +1,15 @@
+# Render Blueprint — Web Service for the Express API (server/)
+# https://render.com/docs/blueprint-spec
+#
+# After deploy: set DATABASE_URL, JWT_SECRET, and CORS_ORIGIN in the Render dashboard
+# (Environment tab). CORS_ORIGIN should include your Vercel URL, e.g.
+# https://your-app.vercel.app
+
+services:
+  - type: web
+    name: rvet-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: npm start

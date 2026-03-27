@@ -18,11 +18,11 @@ import {
   getAvailableProducts,
 } from "../data/mockData";
 
-// Set to true to use mock data (no backend needed)
-const USE_MOCK_DATA = true;
+/** Use mock data only when explicitly enabled (offline UI dev). */
+const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === "true";
 
 const API: AxiosInstance = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:5000/api",
 });
 
 // Add token to requests
