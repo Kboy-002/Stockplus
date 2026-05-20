@@ -14,20 +14,47 @@ import { initDb, pool } from "../db.js";
 const DEMO_PASSWORD = "demo12345";
 
 const DEMO_VENDORS = [
+  // Existing 3 (kept emails + owner names, renamed shops)
   {
     email: "corner@demo.stockpulse",
     name: "Ada Okafor",
-    shop_name: "Corner Shop",
+    shop_name: "Peter Hall",
   },
   {
     email: "campus@demo.stockpulse",
     name: "Emeka Nwosu",
-    shop_name: "Campus Mart",
+    shop_name: "John Hall",
   },
   {
     email: "express@demo.stockpulse",
     name: "Chioma Eze",
-    shop_name: "Express Mini Mart",
+    shop_name: "Joseph Hall",
+  },
+  // New 5 (empty until they add products)
+  {
+    email: "paul-hall@demo.stockpulse",
+    name: "Tunde Adeleke",
+    shop_name: "Paul Hall",
+  },
+  {
+    email: "daniel-hall@demo.stockpulse",
+    name: "Bukola Adekunle",
+    shop_name: "Daniel Hall",
+  },
+  {
+    email: "lydia-hall@demo.stockpulse",
+    name: "Funmi Akinola",
+    shop_name: "Lydia Hall",
+  },
+  {
+    email: "esther-hall@demo.stockpulse",
+    name: "Aisha Bello",
+    shop_name: "Esther Hall",
+  },
+  {
+    email: "mary-hall@demo.stockpulse",
+    name: "Grace Eze",
+    shop_name: "Mary Hall",
   },
 ] as const;
 
