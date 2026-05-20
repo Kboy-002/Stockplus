@@ -13,6 +13,22 @@ import { initDb, pool } from "../db.js";
 
 const DEMO_PASSWORD = "demo12345";
 
+const DEMO_ADMIN = {
+  email: "admin@stocklens.local",
+  name: "System Administrator",
+  shop_name: "Administration",
+  password: "admin12345",
+};
+
+// Names allowed to register through the public form
+const WHITELIST_NAMES = [
+  "Folake Ojo",
+  "Tobi Adebayo",
+  "Ngozi Obi",
+  "Kemi Akande",
+  "David Okechukwu",
+];
+
 const DEMO_VENDORS = [
   // Existing 3 (kept emails + owner names, renamed shops)
   {
@@ -136,6 +152,15 @@ const DEMO_PRODUCTS: ProductSeed[] = [
     quantity: 20,
     expiryDays: 180,
   },
+  // Already expired — demonstrates the system catching past-date stock
+  {
+    vendorEmail: "express@demo.stockpulse",
+    name: "Yoghurt 250ml",
+    categoryName: "Drinks",
+    price: 350,
+    quantity: 4,
+    expiryDays: -2,
+  },
 ];
 
 function expiryDate(days: number | null): Date | null {
@@ -159,6 +184,28 @@ async function main() {
     await client.query("BEGIN");
 
     const vendorIds = new Map<string, string>();
+
+    // Admin user (separate password from demo vendors)
+    const adminPasswordHash = await bcrypt.hash(DEMO_ADMIN.password, 10);
+    await client.query(
+      `INSERT INTO vendors (name, email, password_hash, shop_name, is_admin)
+       VALUES ($1, $2, $3, $4, true)
+       ON CONFLICT (email) DO UPDATE SET
+         name = EXCLUDED.name,
+         password_hash = EXCLUDED.password_hash,
+         is_admin = true`,
+      [DEMO_ADMIN.name, DEMO_ADMIN.email, adminPasswordHash, DEMO_ADMIN.shop_name],
+    );
+
+    // Whitelisted names (idempotent)
+    for (const name of WHITELIST_NAMES) {
+      await client.query(
+        `INSERT INTO vendor_whitelist (full_name)
+         VALUES ($1)
+         ON CONFLICT (full_name) DO NOTHING`,
+        [name],
+      );
+    }
 
     for (const v of DEMO_VENDORS) {
       const ins = await client.query<{ id: string }>(
@@ -207,10 +254,15 @@ async function main() {
 
     await client.query("COMMIT");
     console.log(
-      `Seeded ${DEMO_VENDORS.length} stores and ${DEMO_PRODUCTS.length} products.`,
+      `Seeded ${DEMO_VENDORS.length} stores, ${DEMO_PRODUCTS.length} products, 1 admin, ${WHITELIST_NAMES.length} whitelisted names.`,
     );
-    console.log(`Demo password for all: ${DEMO_PASSWORD}`);
-    console.log("Log in with:");
+    console.log(`\nVendor demo password: ${DEMO_PASSWORD}`);
+    console.log(`Admin login: ${DEMO_ADMIN.email} / ${DEMO_ADMIN.password}\n`);
+    console.log("Whitelisted names ready for registration:");
+    for (const name of WHITELIST_NAMES) {
+      console.log(`  - ${name}`);
+    }
+    console.log("\nVendor logins:");
     for (const v of DEMO_VENDORS) {
       console.log(`  ${v.email}`);
     }

@@ -15,6 +15,7 @@ function readJwtSecret(): string {
   return s;
 }
 const JWT_SECRET = readJwtSecret();
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const app = express();
 
@@ -42,6 +43,7 @@ interface VendorRow {
   name: string;
   email: string;
   shop_name: string;
+  is_admin?: boolean;
 }
 
 function vendorJson(row: VendorRow) {
@@ -50,9 +52,9 @@ function vendorJson(row: VendorRow) {
     name: row.name,
     email: row.email,
     shop_name: row.shop_name,
+    is_admin: row.is_admin ?? false,
   };
 }
-
 interface ProductJoinRow {
   id: string;
   vendor_id: string;
@@ -148,7 +150,7 @@ declare global {
   }
 }
 
-function authMiddleware(req: Request, res: Response, next: NextFunction) {
+async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const auth = req.headers.authorization;
   if (!auth?.startsWith("Bearer ")) {
     res.status(401).json({ message: "Unauthorized" });
@@ -156,6 +158,20 @@ function authMiddleware(req: Request, res: Response, next: NextFunction) {
   }
   try {
     const payload = jwt.verify(auth.slice(7), JWT_SECRET) as { sub: string };
+    // Verify the vendor still exists and is active on every request
+    const result = await pool.query(
+      `SELECT is_active FROM vendors WHERE id = $1`,
+      [payload.sub],
+    );
+    const row = result.rows[0];
+    if (!row) {
+      res.status(401).json({ message: "Account no longer exists" });
+      return;
+    }
+    if (!row.is_active) {
+      res.status(403).json({ message: "Account has been deactivated" });
+      return;
+    }
     req.vendorId = payload.sub;
     next();
   } catch {
@@ -171,22 +187,62 @@ app.post("/api/auth/register", async (req, res) => {
       res.status(400).json({ message: "Missing required fields" });
       return;
     }
+    if (!EMAIL_REGEX.test(String(email))) {
+      res.status(400).json({ message: "Please provide a valid email address" });
+      return;
+    }
     if (String(password).length < 6) {
       res.status(400).json({ message: "Password must be at least 6 characters" });
       return;
     }
-    const password_hash = await bcrypt.hash(String(password), 10);
-    const result = await pool.query<VendorRow>(
-      `INSERT INTO vendors (name, email, password_hash, shop_name)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, name, email, shop_name`,
-      [name, email.toLowerCase(), password_hash, shop_name],
+
+    // Whitelist check (case-insensitive, whitespace-tolerant)
+    const normalizedName = String(name).trim();
+    const whitelistResult = await pool.query<{ id: number; is_used: boolean }>(
+      `SELECT id, is_used FROM vendor_whitelist
+       WHERE LOWER(full_name) = LOWER($1)`,
+      [normalizedName],
     );
-    const vendor = result.rows[0];
-    const token = jwt.sign({ sub: vendor.id }, JWT_SECRET, {
-      expiresIn: "7d",
-    });
-    res.json({ token, vendor: vendorJson(vendor) });
+    if (whitelistResult.rows.length === 0) {
+      res.status(403).json({
+        message:
+          "Name not authorized. Please contact the administrator to be added to the registration list.",
+      });
+      return;
+    }
+    const whitelistEntry = whitelistResult.rows[0];
+    if (whitelistEntry.is_used) {
+      res.status(403).json({
+        message: "This name has already been used to register an account.",
+      });
+      return;
+    }
+
+    const password_hash = await bcrypt.hash(String(password), 10);
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await client.query<VendorRow>(
+        `INSERT INTO vendors (name, email, password_hash, shop_name)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, name, email, shop_name`,
+        [normalizedName, String(email).toLowerCase(), password_hash, shop_name],
+      );
+      await client.query(
+        `UPDATE vendor_whitelist SET is_used = true, used_at = now() WHERE id = $1`,
+        [whitelistEntry.id],
+      );
+      await client.query("COMMIT");
+
+      const vendor = result.rows[0];
+      const token = jwt.sign({ sub: vendor.id }, JWT_SECRET, { expiresIn: "7d" });
+      res.json({ token, vendor: vendorJson(vendor) });
+    } catch (innerErr) {
+      await client.query("ROLLBACK");
+      throw innerErr;
+    } finally {
+      client.release();
+    }
   } catch (e: unknown) {
     const err = e as { code?: string };
     if (err.code === "23505") {
@@ -205,8 +261,11 @@ app.post("/api/auth/login", async (req, res) => {
       res.status(400).json({ message: "Missing email or password" });
       return;
     }
-    const result = await pool.query<VendorRow & { password_hash: string }>(
-      `SELECT id, name, email, shop_name, password_hash FROM vendors WHERE email = $1`,
+    const result = await pool.query<
+      VendorRow & { password_hash: string; is_active: boolean; is_admin: boolean }
+    >(
+      `SELECT id, name, email, shop_name, password_hash, is_active, is_admin
+       FROM vendors WHERE email = $1`,
       [String(email).toLowerCase()],
     );
     const row = result.rows[0];
@@ -214,22 +273,26 @@ app.post("/api/auth/login", async (req, res) => {
       res.status(401).json({ message: "Invalid credentials" });
       return;
     }
-    const vendor = {
+    if (!row.is_active) {
+      res.status(403).json({
+        message: "This account has been deactivated. Please contact the administrator.",
+      });
+      return;
+    }
+    const vendor: VendorRow = {
       id: row.id,
       name: row.name,
       email: row.email,
       shop_name: row.shop_name,
+      is_admin: row.is_admin,
     };
-    const token = jwt.sign({ sub: vendor.id }, JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign({ sub: vendor.id }, JWT_SECRET, { expiresIn: "7d" });
     res.json({ token, vendor: vendorJson(vendor) });
   } catch (e) {
     console.error(e);
     res.status(500).json({ message: "Login failed" });
   }
 });
-
 // --- Vendor (protected) ---
 app.get("/api/vendor/products", authMiddleware, async (req, res) => {
   try {
@@ -388,10 +451,144 @@ app.get("/api/vendor/stats", authMiddleware, async (req, res) => {
   }
 });
 
+
+// --- Admin (protected, admin only) ---
+async function adminMiddleware(req: Request, res: Response, next: NextFunction) {
+  if (!req.vendorId) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
+  try {
+    const result = await pool.query<{ is_admin: boolean; is_active: boolean }>(
+      `SELECT is_admin, is_active FROM vendors WHERE id = $1`,
+      [req.vendorId],
+    );
+    const row = result.rows[0];
+    if (!row || !row.is_admin) {
+      res.status(403).json({ message: "Admin access required" });
+      return;
+    }
+    if (!row.is_active) {
+      res.status(403).json({ message: "Account deactivated" });
+      return;
+    }
+    next();
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Auth check failed" });
+  }
+}
+
+app.get("/api/admin/whitelist", authMiddleware, adminMiddleware, async (_req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, full_name, is_used, used_at, created_at
+       FROM vendor_whitelist
+       ORDER BY created_at DESC`,
+    );
+    res.json(result.rows);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Failed to load whitelist" });
+  }
+});
+
+app.post("/api/admin/whitelist", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { full_name } = req.body ?? {};
+    if (!full_name || !String(full_name).trim()) {
+      res.status(400).json({ message: "Name is required" });
+      return;
+    }
+    const normalized = String(full_name).trim();
+    const result = await pool.query(
+      `INSERT INTO vendor_whitelist (full_name)
+       VALUES ($1)
+       ON CONFLICT (full_name) DO NOTHING
+       RETURNING id, full_name, is_used, used_at, created_at`,
+      [normalized],
+    );
+    if (result.rows.length === 0) {
+      res.status(409).json({ message: "Name already exists in whitelist" });
+      return;
+    }
+    res.status(201).json(result.rows[0]);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Failed to add name" });
+  }
+});
+
+app.delete("/api/admin/whitelist/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (Number.isNaN(id)) {
+      res.status(400).json({ message: "Invalid ID" });
+      return;
+    }
+    const result = await pool.query(
+      `DELETE FROM vendor_whitelist WHERE id = $1 RETURNING id`,
+      [id],
+    );
+    if (result.rows.length === 0) {
+      res.status(404).json({ message: "Not found" });
+      return;
+    }
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Failed to remove name" });
+  }
+});
+
+app.get("/api/admin/vendors", authMiddleware, adminMiddleware, async (_req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, email, shop_name, is_active, is_admin, created_at
+       FROM vendors
+       ORDER BY created_at DESC`,
+    );
+    res.json(result.rows);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Failed to load vendors" });
+  }
+});
+
+app.patch("/api/admin/vendors/:id/active", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { is_active } = req.body ?? {};
+    if (typeof is_active !== "boolean") {
+      res.status(400).json({ message: "is_active must be boolean" });
+      return;
+    }
+    if (id === req.vendorId && !is_active) {
+      res.status(400).json({ message: "You cannot deactivate your own account" });
+      return;
+    }
+    const result = await pool.query(
+      `UPDATE vendors SET is_active = $1 WHERE id = $2
+       RETURNING id, name, email, shop_name, is_active, is_admin`,
+      [is_active, id],
+    );
+    if (result.rows.length === 0) {
+      res.status(404).json({ message: "Vendor not found" });
+      return;
+    }
+    res.json(result.rows[0]);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Failed to update vendor" });
+  }
+});
+
 // --- Catalog (public) ---
+
+
 app.get("/api/catalog/categories", async (_req, res) => {
   try {
-    const result = await pool.query<{ id: number; name: string }>(
+    const result = await pool.query(
       `SELECT id, name FROM categories ORDER BY id`,
     );
     res.json(
@@ -405,7 +602,7 @@ app.get("/api/catalog/categories", async (_req, res) => {
 
 app.get("/api/catalog/vendors", async (_req, res) => {
   try {
-    const result = await pool.query<{ id: string; shop_name: string }>(
+    const result = await pool.query(
       `SELECT DISTINCT v.id, v.shop_name
        FROM vendors v
        INNER JOIN products p ON p.vendor_id = v.id
@@ -421,7 +618,6 @@ app.get("/api/catalog/vendors", async (_req, res) => {
     res.status(500).json({ message: "Failed to load vendors" });
   }
 });
-
 app.get("/api/catalog/products", async (req, res) => {
   try {
     const { category, search, minPrice, maxPrice, vendor, sort } = req.query;

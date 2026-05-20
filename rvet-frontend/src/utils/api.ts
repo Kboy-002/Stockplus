@@ -254,4 +254,18 @@ export const getCategories = async () => {
   return API.get<Category[]>("/catalog/categories");
 };
 
+// Admin APIs
+export const getWhitelist = () => API.get("/admin/whitelist");
+
+export const addWhitelistName = (full_name: string) =>
+  API.post("/admin/whitelist", { full_name });
+
+export const deleteWhitelistName = (id: number) =>
+  API.delete(`/admin/whitelist/${id}`);
+
+export const getAllVendors = () => API.get("/admin/vendors");
+
+export const setVendorActive = (id: string, is_active: boolean) =>
+  API.patch(`/admin/vendors/${id}/active`, { is_active });
+
 export default API;

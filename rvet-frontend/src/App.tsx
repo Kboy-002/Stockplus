@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import VendorDashboard from "./pages/VendorDashboard";
 import StudentCatalog from "./pages/StudentCatalog";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   return (
@@ -30,6 +31,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <VendorDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected Admin Route */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute adminOnly>
+                <AdminDashboard />
               </ProtectedRoute>
             }
           />

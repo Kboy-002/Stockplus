@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 // Icon Components
-const LeafIcon = () => (
+const LensIcon = () => (
   <svg
     className="w-8 h-8"
     viewBox="0 0 24 24"
@@ -12,8 +12,8 @@ const LeafIcon = () => (
     stroke="currentColor"
     strokeWidth="2"
   >
-    <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
-    <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+    <circle cx="12" cy="12" r="3" />
   </svg>
 );
 
@@ -62,7 +62,11 @@ const Login = () => {
     const result = await login(formData.email, formData.password);
 
     if (result.success) {
-      navigate("/vendor/dashboard");
+      if (result.vendor?.is_admin) {
+        navigate("/admin");
+      } else {
+        navigate("/vendor/dashboard");
+      }
     } else {
       setError(result.error || "Login failed");
     }
@@ -84,17 +88,17 @@ const Login = () => {
             {/* Logo */}
             <div className="flex items-center gap-3 mb-8">
               <div className="p-3 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl text-white shadow-glow">
-                <LeafIcon />
+                <LensIcon />
               </div>
               <span className="text-3xl font-display font-bold text-surface-800">
-                Fresh<span className="text-gradient">Track</span>
+                Stock<span className="text-gradient">Lens</span>
               </span>
             </div>
 
             {/* Tagline */}
             <h1 className="text-4xl xl:text-5xl font-display font-bold text-surface-900 leading-tight mb-6">
-              Keep your inventory <span className="text-gradient">fresh</span>{" "}
-              and <span className="text-gradient">organized</span>
+              See <span className="text-gradient">every shelf</span>,{" "}
+              in <span className="text-gradient">real time</span>
             </h1>
 
             <p className="text-lg text-surface-600 mb-8 leading-relaxed">
@@ -129,7 +133,7 @@ const Login = () => {
             {/* Mobile Logo */}
             <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
               <div className="p-2.5 bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl text-white">
-                <LeafIcon />
+                <LensIcon />
               </div>
               <span className="text-2xl font-display font-bold text-surface-800">
                 Fresh<span className="text-gradient">Track</span>
@@ -257,7 +261,7 @@ const Login = () => {
 
               <div className="mt-8 text-center">
                 <p className="text-surface-500">
-                  New to FreshTrack?{" "}
+                  New to StockLens?{" "}
                   <Link
                     to="/register"
                     className="text-brand-600 hover:text-brand-700 font-semibold transition-colors"

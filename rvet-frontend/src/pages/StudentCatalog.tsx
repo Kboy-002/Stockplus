@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import type { ChangeEvent } from "react";
+import Footer from "../components/Footer";
 import { Link } from "react-router-dom";
 import { getCatalogProducts, getCategories, getCatalogVendors } from "../utils/api";
 import type { Product, Category, CatalogFilters, CatalogVendor } from "../types";
 
 // Icon Components
-const LeafIcon = () => (
+const LensIcon = () => (
   <svg
     className="w-6 h-6"
     viewBox="0 0 24 24"
@@ -13,8 +14,8 @@ const LeafIcon = () => (
     stroke="currentColor"
     strokeWidth="2"
   >
-    <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
-    <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+    <circle cx="12" cy="12" r="3" />
   </svg>
 );
 
@@ -102,6 +103,8 @@ const StudentCatalog = () => {
     vendor: "",
     sort: "newest",
   });
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [, setTick] = useState(0); // forces re-render every second for relative time
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -115,6 +118,7 @@ const StudentCatalog = () => {
 
       const response = await getCatalogProducts(params);
       setProducts(response.data);
+      setLastUpdated(new Date());
       setLoading(false);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -153,9 +157,15 @@ const StudentCatalog = () => {
       getCatalogVendors()
         .then((r) => setVendors(r.data))
         .catch(() => {});
-    }, 60000);
+    }, 5000); // 5 seconds — real-time visibility
     return () => clearInterval(interval);
   }, [fetchProducts]);
+
+  // Ticks every second so the "Updated Xs ago" indicator stays current
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -194,9 +204,17 @@ const StudentCatalog = () => {
     const days = getExpiryDays(expiryDate);
     if (days === null) return null;
 
+    if (days < 0) {
+      return (
+        <span className="badge-danger">
+          <ClockIcon />
+          <span className="ml-1">Expired</span>
+        </span>
+      );
+    }
     if (days <= 3) {
       return (
-        <span className="badge-warning">
+        <span className="badge-danger">
           <ClockIcon />
           <span className="ml-1">{days}d left</span>
         </span>
@@ -204,13 +222,18 @@ const StudentCatalog = () => {
     }
     if (days <= 7) {
       return (
-        <span className="badge-info">
+        <span className="badge-warning">
           <ClockIcon />
           <span className="ml-1">{days}d left</span>
         </span>
       );
     }
-    return null;
+    return (
+      <span className="badge-success">
+        <ClockIcon />
+        <span className="ml-1">Fresh</span>
+      </span>
+    );
   };
 
   const hasActiveFilters =
@@ -221,6 +244,14 @@ const StudentCatalog = () => {
     filters.maxPrice ||
     (filters.sort && filters.sort !== "newest");
 
+  const relativeTime = (date: Date | null): string => {
+    if (!date) return "loading...";
+    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (seconds < 2) return "just now";
+    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    return date.toLocaleTimeString();
+  };
   const formatExpiryDetail = (expiryDate: string | null): string => {
     if (!expiryDate) return "No expiry date";
     const days = getExpiryDays(expiryDate);
@@ -238,10 +269,10 @@ const StudentCatalog = () => {
             {/* Logo */}
             <div className="flex items-center gap-2">
               <div className="p-2 bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl text-white">
-                <LeafIcon />
+                <LensIcon />
               </div>
               <span className="text-xl font-display font-bold text-surface-800">
-                Fresh<span className="text-gradient">Track</span>
+                Stock<span className="text-gradient">Lens</span>
               </span>
             </div>
 
@@ -684,16 +715,23 @@ const StudentCatalog = () => {
           </div>
         </div>
       )}
+{/* Footer */}
+      <Footer />
 
+      {/* Live Indicator */}
+      <div className="fixed bottom-6 right-6 glass-card px-4 py-3 rounded-2xl flex items-center gap-3 animate-fade-in"></div>
       {/* Live Indicator */}
       <div className="fixed bottom-6 right-6 glass-card px-4 py-3 rounded-2xl flex items-center gap-3 animate-fade-in">
         <div className="relative flex items-center justify-center">
           <div className="w-3 h-3 bg-green-500 rounded-full" />
           <div className="absolute w-3 h-3 bg-green-500 rounded-full animate-ping" />
         </div>
-        <span className="text-sm font-medium text-surface-700">
-          Live updates
-        </span>
+        <div className="flex flex-col leading-tight">
+          <span className="text-sm font-semibold text-surface-700">Live</span>
+          <span className="text-xs text-surface-500">
+            Updated {relativeTime(lastUpdated)}
+          </span>
+        </div>
       </div>
     </div>
   );

@@ -18,9 +18,10 @@ import type {
   ProductFormData,
   ExpiryStatus,
 } from "../types";
+import Footer from "../components/Footer";
 
 // Icon Components
-const LeafIcon = () => (
+const LensIcon = () => (
   <svg
     className="w-6 h-6"
     viewBox="0 0 24 24"
@@ -28,8 +29,8 @@ const LeafIcon = () => (
     stroke="currentColor"
     strokeWidth="2"
   >
-    <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
-    <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+    <circle cx="12" cy="12" r="3" />
   </svg>
 );
 
@@ -176,7 +177,7 @@ const VendorDashboard = () => {
     } catch (error: unknown) {
       console.error("Error fetching data:", error);
       const err = error as { response?: { status?: number } };
-      if (err.response?.status === 401) {
+      if (err.response?.status === 401 || err.response?.status === 403) {
         logout();
         navigate("/login");
       }
@@ -185,6 +186,8 @@ const VendorDashboard = () => {
 
   useEffect(() => {
     fetchData();
+    const interval = setInterval(fetchData, 5000); // sync with catalog real-time
+    return () => clearInterval(interval);
   }, [fetchData]);
 
   const getExpiryStatus = (expiryDate: string | null): ExpiryStatus => {
@@ -324,10 +327,10 @@ const VendorDashboard = () => {
             {/* Logo */}
             <Link to="/catalog" className="flex items-center gap-2">
               <div className="p-2 bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl text-white">
-                <LeafIcon />
+                <LensIcon />
               </div>
               <span className="text-xl font-display font-bold text-surface-800">
-                Fresh<span className="text-gradient">Track</span>
+                Stock<span className="text-gradient">Lens</span>
               </span>
             </Link>
 
@@ -562,7 +565,7 @@ const VendorDashboard = () => {
           )}
         </div>
       </main>
-
+      <Footer />
       {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

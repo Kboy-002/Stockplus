@@ -15,6 +15,7 @@ interface AuthContextType {
 interface AuthResult {
   success: boolean;
   error?: string;
+  vendor?: Vendor;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -61,7 +62,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setToken(token);
       setVendor(vendor);
 
-      return { success: true };
+      return { success: true, vendor };
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       return {
@@ -70,7 +71,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       };
     }
   };
-
   const register = async (data: VendorRegisterData): Promise<AuthResult> => {
     try {
       const response = await apiRegister(data);

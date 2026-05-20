@@ -79,3 +79,22 @@ export interface CatalogFilters {
 
 // Expiry Status Types
 export type ExpiryStatus = "none" | "safe" | "warning" | "critical" | "expired";
+
+// Admin Types
+export interface WhitelistEntry {
+  id: number;
+  full_name: string;
+  is_used: boolean;
+  used_at: string | null;
+  created_at: string;
+}
+
+export interface AdminVendor {
+  id: string;
+  name: string;
+  email: string;
+  shop_name: string;
+  is_active: boolean;
+  is_admin: boolean;
+  created_at: string;
+}

@@ -27,6 +27,18 @@ CREATE TABLE IF NOT EXISTS vendors (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Idempotent column additions for existing databases
+ALTER TABLE vendors ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE vendors ADD COLUMN IF NOT EXISTS is_admin  BOOLEAN NOT NULL DEFAULT false;
+
+CREATE TABLE IF NOT EXISTS vendor_whitelist (
+  id SERIAL PRIMARY KEY,
+  full_name VARCHAR(255) NOT NULL UNIQUE,
+  is_used BOOLEAN NOT NULL DEFAULT false,
+  used_at TIMESTAMPTZ NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS products (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vendor_id UUID NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
