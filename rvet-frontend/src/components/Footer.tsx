@@ -14,7 +14,7 @@ const Footer = () => {
           <div className="text-center md:text-right">
             <span>
               Victoria O. Godwin · Computer &amp; Information Sciences,
-              Covenant University · 2025
+              Covenant University · 2026
             </span>
           </div>
         </div>

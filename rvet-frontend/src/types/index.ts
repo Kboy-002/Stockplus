@@ -4,6 +4,7 @@ export interface Vendor {
   name: string;
   email: string;
   shop_name: string;
+  is_admin?: boolean;
 }
 
 export interface VendorRegisterData {
